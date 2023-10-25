@@ -1,0 +1,516 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+#define TEMPLATE_HEADER 12
+#define SIZE_HEADER 6
+#define SIZE_T_ID_53 56
+#define SIZE_T_ID_15 44
+#define SIZE_T_ID_24 32
+#define SIZE_T_ID_25 32
+#define SIZE_T_ID_51 44
+#define SIZE_UDP_HEADER 62
+
+static const unsigned char pkt1[138] = {
+0x01, 0x00, 0x5e, 0x72, 0x65, 0xcc, 0xa0, 0x36, /* ..^re..6 */
+0x9f, 0xc7, 0x1d, 0x44, 0x81, 0x00, 0x07, 0x55, /* ...D...U */
+0x08, 0x00, 0x45, 0x00, 0x00, 0x78, 0xb1, 0x34, /* ..E..x.4 */
+0x40, 0x00, 0x64, 0x11, 0xc3, 0x4c, 0x0a, 0x67, /* @.d..L.g */
+0x42, 0x4e, 0xef, 0x72, 0x65, 0xcc, 0xa6, 0x24, /* BN.re..$ */
+0xd9, 0x03, 0x00, 0x64, 0xd8, 0x67, 0x32, 0x00, /* ...d.g2. */
+0xbf, 0x07, 0xfa, 0xd9, 0x00, 0x00, 0x62, 0xcb, /* ......b. */
+0x87, 0x1b, 0xac, 0x33, 0x6d, 0x17, 0x4c, 0x00, /* ...3m.L. */
+0x50, 0xeb, 0x40, 0x00, 0x32, 0x00, 0x02, 0x00, /* P.@.2... */
+0x07, 0x00, 0xa4, 0x96, 0xef, 0x90, 0x2e, 0x00, /* ........ */
+0x00, 0x00, 0x80, 0x00, 0x31, 0x00, 0x40, 0x0d, /* ....1.@. */
+0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, /* ........ */
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1c, 0x00, /* ........ */
+0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x40, 0x0f, /* ..d...@. */
+0x68, 0x1b, 0xac, 0x33, 0x6d, 0x17, 0xc1, 0xc3, /* h..3m... */
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x38, 0x00, /* ......8. */
+0x00, 0x00, 0x62, 0xcb, 0x87, 0x1b, 0xac, 0x33, /* ..b....3 */
+0x6d, 0x17                                      /* m. */
+};
+
+/* Frame (330 bytes) */
+static const unsigned char pkt2[330] = {
+0x01, 0x00, 0x5e, 0x72, 0x65, 0xcc, 0xa0, 0x36, /* ..^re..6 */
+0x9f, 0xc7, 0x1d, 0x44, 0x81, 0x00, 0x07, 0x55, /* ...D...U */
+0x08, 0x00, 0x45, 0x00, 0x01, 0x38, 0xb1, 0x6a, /* ..E..8.j */
+0x40, 0x00, 0x64, 0x11, 0xc2, 0x56, 0x0a, 0x67, /* @.d..V.g */
+0x42, 0x4e, 0xef, 0x72, 0x65, 0xcc, 0xa6, 0x24, /* BN.re..$ */
+0xd9, 0x03, 0x01, 0x24, 0xfc, 0xa7, 0x32, 0x00, /* ...$..2. */
+0xbf, 0x07, 0xfc, 0xd9, 0x00, 0x00, 0x51, 0xf7, /* ......Q. */
+0x39, 0x1f, 0xac, 0x33, 0x6d, 0x17, 0x44, 0x00, /* 9..3m.D. */
+0x50, 0xeb, 0x38, 0x00, 0x35, 0x00, 0x02, 0x00, /* P.8.5... */
+0x07, 0x00, 0x4a, 0x58, 0x77, 0x48, 0x17, 0x00, /* ..JXwH.. */
+0x00, 0x00, 0x00, 0x01, 0x01, 0x20, 0xa0, 0x86, /* ..... .. */
+0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, /* ........ */
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, /* ........ */
+0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x64, 0x00, /* ..d...d. */
+0x00, 0x00, 0x51, 0x4c, 0x00, 0x00, 0x51, 0xf7, /* ..QL..Q. */
+0x39, 0x1f, 0xac, 0x33, 0x6d, 0x17, 0x3a, 0x00, /* 9..3m.:. */
+0x00, 0x00, 0x38, 0x00, 0x50, 0xeb, 0x2c, 0x00, /* ..8.P.,. */
+0x0f, 0x00, 0x02, 0x00, 0x07, 0x00, 0x4a, 0x58, /* ......JX */
+0x77, 0x48, 0x17, 0x00, 0x00, 0x00, 0x00, 0x00, /* wH...... */
+0x00, 0x00, 0xa0, 0x86, 0x01, 0x00, 0x00, 0x00, /* ........ */
+0x00, 0x00, 0x00, 0xca, 0x9a, 0x3b, 0x00, 0x00, /* .....;.. */
+0x00, 0x00, 0x51, 0x4c, 0x51, 0xf7, 0x39, 0x1f, /* ..QLQ.9. */
+0xac, 0x33, 0x6d, 0x17, 0x3b, 0x00, 0x00, 0x00, /* .3m.;... */
+0x00, 0x00, 0x2c, 0x00, 0x50, 0xeb, 0x20, 0x00, /* ..,.P. . */
+0x18, 0x00, 0x02, 0x00, 0x07, 0x00, 0x4a, 0x58, /* ......JX */
+0x77, 0x48, 0x17, 0x00, 0x00, 0x00, 0x00, 0x00, /* wH...... */
+0x51, 0x4c, 0xa0, 0x86, 0x01, 0x00, 0x00, 0x00, /* QL...... */
+0x00, 0x00, 0x51, 0xf7, 0x39, 0x1f, 0xac, 0x33, /* ..Q.9..3 */
+0x6d, 0x17, 0x3c, 0x00, 0x00, 0x00, 0x2c, 0x00, /* m.<...,. */
+0x50, 0xeb, 0x20, 0x00, 0x19, 0x00, 0x02, 0x00, /* P. ..... */
+0x07, 0x00, 0x4a, 0x58, 0x77, 0x48, 0x17, 0x00, /* ..JXwH.. */
+0x00, 0x00, 0x00, 0x00, 0x51, 0x4c, 0xa0, 0x86, /* ....QL.. */
+0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x51, 0xf7, /* ......Q. */
+0x39, 0x1f, 0xac, 0x33, 0x6d, 0x17, 0x3d, 0x00, /* 9..3m.=. */
+0x00, 0x00, 0x38, 0x00, 0x50, 0xeb, 0x2c, 0x00, /* ..8.P.,. */
+0x33, 0x00, 0x02, 0x00, 0x07, 0x00, 0x4a, 0x58, /* 3.....JX */
+0x77, 0x48, 0x17, 0x00, 0x00, 0x00, 0x00, 0x00, /* wH...... */
+0x30, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0....... */
+0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xf6, 0x01, /* ........ */
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x51, 0xf7, /* ......Q. */
+0x39, 0x1f, 0xac, 0x33, 0x6d, 0x17, 0x3e, 0x00, /* 9..3m.>. */
+0x00, 0x00                                      /* .. */
+};
+
+static const unsigned char pkt4[126] = {
+0x01, 0x00, 0x5e, 0x72, 0x65, 0xcc, 0xa0, 0x36, /* ..^re..6 */
+0x9f, 0xc7, 0x1d, 0x44, 0x81, 0x00, 0x07, 0x55, /* ...D...U */
+0x08, 0x00, 0x45, 0x00, 0x00, 0x6c, 0xb1, 0x6b, /* ..E..l.k */
+0x40, 0x00, 0x64, 0x11, 0xc3, 0x21, 0x0a, 0x67, /* @.d..!.g */
+0x42, 0x4e, 0xef, 0x72, 0x65, 0xcc, 0xa6, 0x24, /* BN.re..$ */
+0xd9, 0x03, 0x00, 0x58, 0xd7, 0xf8, 0x32, 0x00, /* ...X..2. */
+0xbf, 0x07, 0xfd, 0xd9, 0x00, 0x00, 0x93, 0x05, /* ........ */
+0x44, 0x1f, 0xac, 0x33, 0x6d, 0x17, 0x40, 0x00, /* D..3m.@. */
+0x50, 0xeb, 0x34, 0x00, 0x38, 0x00, 0x02, 0x00, /* P.4.8... */
+0x07, 0x00, 0x4a, 0x58, 0x77, 0x48, 0x17, 0x00, /* ..JXwH.. */
+0x00, 0x00, 0x80, 0x01, 0x51, 0x4c, 0x0a, 0x00, /* ....QL.. */
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xa0, 0x86, /* ........ */
+0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xca, /* ........ */
+0x9a, 0x3b, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, /* .;...... */
+0x00, 0x00, 0x93, 0x05, 0x44, 0x1f, 0xac, 0x33, /* ....D..3 */
+0x6d, 0x17, 0x3f, 0x00, 0x00, 0x00              /* m.?... */
+};
+
+/* Frame (230 bytes) */
+static const unsigned char pkt6[230] = {
+0x01, 0x00, 0x5e, 0x72, 0x65, 0xcc, 0xa0, 0x36, /* ..^re..6 */
+0x9f, 0xc7, 0x1d, 0x44, 0x81, 0x00, 0x07, 0x55, /* ...D...U */
+0x08, 0x00, 0x45, 0x00, 0x00, 0xd4, 0xb1, 0x6d, /* ..E....m */
+0x40, 0x00, 0x64, 0x11, 0xc2, 0xb7, 0x0a, 0x67, /* @.d....g */
+0x42, 0x4e, 0xef, 0x72, 0x65, 0xcc, 0xa6, 0x24, /* BN.re..$ */
+0xd9, 0x03, 0x00, 0xc0, 0xf1, 0x5b, 0x32, 0x00, /* .....[2. */
+0xbf, 0x07, 0xff, 0xd9, 0x00, 0x00, 0x01, 0xdb, /* ........ */
+0x53, 0x1f, 0xac, 0x33, 0x6d, 0x17, 0x44, 0x00, /* S..3m.D. */
+0x50, 0xeb, 0x38, 0x00, 0x35, 0x00, 0x02, 0x00, /* P.8.5... */
+0x07, 0x00, 0x4a, 0x58, 0x77, 0x48, 0x17, 0x00, /* ..JXwH.. */
+0x00, 0x00, 0x00, 0x01, 0x00, 0x20, 0x40, 0x0d, /* ..... @. */
+0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, /* ........ */
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00, /* ........ */
+0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x64, 0x00, /* ..d...d. */
+0x00, 0x00, 0x51, 0x4c, 0x00, 0x00, 0x01, 0xdb, /* ..QL.... */
+0x53, 0x1f, 0xac, 0x33, 0x6d, 0x17, 0x41, 0x00, /* S..3m.A. */
+0x00, 0x00, 0x2c, 0x00, 0x50, 0xeb, 0x20, 0x00, /* ..,.P. . */
+0x18, 0x00, 0x02, 0x00, 0x07, 0x00, 0x4a, 0x58, /* ......JX */
+0x77, 0x48, 0x17, 0x00, 0x00, 0x00, 0x00, 0x00, /* wH...... */
+0x51, 0x4c, 0x40, 0x0d, 0x03, 0x00, 0x00, 0x00, /* QL@..... */
+0x00, 0x00, 0x01, 0xdb, 0x53, 0x1f, 0xac, 0x33, /* ....S..3 */
+0x6d, 0x17, 0x42, 0x00, 0x00, 0x00, 0x38, 0x00, /* m.B...8. */
+0x50, 0xeb, 0x2c, 0x00, 0x33, 0x00, 0x02, 0x00, /* P.,.3... */
+0x07, 0x00, 0x4a, 0x58, 0x77, 0x48, 0x17, 0x00, /* ..JXwH.. */
+0x00, 0x00, 0x00, 0x00, 0x31, 0x00, 0x01, 0x00, /* ....1... */
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* ........ */
+0x00, 0x80, 0xf7, 0x01, 0x00, 0x00, 0x00, 0x00, /* ........ */
+0x00, 0x00, 0x01, 0xdb, 0x53, 0x1f, 0xac, 0x33, /* ....S..3 */
+0x6d, 0x17, 0x43, 0x00, 0x00, 0x00              /* m.C... */
+};
+
+/* Frame (186 bytes) */
+static const unsigned char pkt15[186] = {
+0x01, 0x00, 0x5e, 0x72, 0x65, 0xcc, 0xa0, 0x36, /* ..^re..6 */
+0x9f, 0xc7, 0x1d, 0x44, 0x81, 0x00, 0x07, 0x55, /* ...D...U */
+0x08, 0x00, 0x45, 0x00, 0x00, 0xa8, 0xb1, 0x7d, /* ..E....} */
+0x40, 0x00, 0x64, 0x11, 0xc2, 0xd3, 0x0a, 0x67, /* @.d....g */
+0x42, 0x4e, 0xef, 0x72, 0x65, 0xcc, 0xa6, 0x24, /* BN.re..$ */
+0xd9, 0x03, 0x00, 0x94, 0xb4, 0x71, 0x32, 0x00, /* .....q2. */
+0xbf, 0x07, 0x08, 0xda, 0x00, 0x00, 0x2b, 0xd7, /* ......+. */
+0x5d, 0x1f, 0xac, 0x33, 0x6d, 0x17, 0x44, 0x00, /* ]..3m.D. */
+0x50, 0xeb, 0x38, 0x00, 0x35, 0x00, 0x02, 0x00, /* P.8.5... */
+0x07, 0x00, 0x4a, 0x58, 0x77, 0x48, 0x17, 0x00, /* ..JXwH.. */
+0x00, 0x00, 0x00, 0x01, 0x00, 0x20, 0xa0, 0x86, /* ..... .. */
+0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, /* ........ */
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1e, 0x00, /* ........ */
+0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x64, 0x00, /* ..d...d. */
+0x00, 0x00, 0x51, 0x4c, 0x00, 0x00, 0x2b, 0xd7, /* ..QL..+. */
+0x5d, 0x1f, 0xac, 0x33, 0x6d, 0x17, 0x46, 0x00, /* ]..3m.F. */
+0x00, 0x00, 0x38, 0x00, 0x50, 0xeb, 0x2c, 0x00, /* ..8.P.,. */
+0x33, 0x00, 0x02, 0x00, 0x07, 0x00, 0x4a, 0x58, /* 3.....JX */
+0x77, 0x48, 0x17, 0x00, 0x00, 0x00, 0x00, 0x00, /* wH...... */
+0x30, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0....... */
+0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xfa, 0x01, /* ........ */
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2b, 0xd7, /* ......+. */
+0x5d, 0x1f, 0xac, 0x33, 0x6d, 0x17, 0x47, 0x00, /* ]..3m.G. */
+0x00, 0x00                                      /* .. */
+};
+
+void packet_1Template(int flag)
+{
+    int i, j, count=0;
+    
+    if(0 == flag)
+    {
+        printf("tam: %d\n", sizeof(pkt1));
+        //pacote com um template
+        if(138 == sizeof(pkt1))
+        {
+            unsigned char msg1[sizeof(pkt1)-SIZE_UDP_HEADER];
+            for(i=SIZE_UDP_HEADER; i<sizeof(pkt1); i++)
+            {
+                msg1[i-SIZE_UDP_HEADER] = pkt1[i];
+                //printf("%d\n", i-46);
+            }
+            printf("[TEMPLATE ID]: %d\n", msg1[SIZE_HEADER]);
+            for(j=0; j<sizeof(msg1); j++)
+            {
+                //printf("%x\n", msg1[j]);
+            }
+        }
+    }
+
+    else
+    {
+        printf("tam: %d\n", sizeof(pkt4));
+        count = 0;
+        //pacote com um template
+        if(126 == sizeof(pkt4))
+        {
+            unsigned char msg3[sizeof(pkt4)-SIZE_UDP_HEADER];
+            for(i=SIZE_UDP_HEADER; i<sizeof(pkt4); i++)
+            {
+                msg3[i-SIZE_UDP_HEADER] = pkt4[i];
+                //printf("%d\n", i-46);
+            }
+            printf("[TEMPLATE ID]: %d\n", msg3[SIZE_HEADER]);
+        }
+    }
+
+}
+
+void packet_5Template()
+{
+    int i, j, count=0;
+    printf("tam: %d\n", sizeof(pkt2));
+    count = 0;
+    if(330 == sizeof(pkt2))
+    {
+        unsigned char msg2[sizeof(pkt2)-SIZE_UDP_HEADER];
+        unsigned char temID53[TEMPLATE_HEADER+SIZE_T_ID_53];
+        unsigned char temID15[TEMPLATE_HEADER+SIZE_T_ID_15];
+        unsigned char temID24[TEMPLATE_HEADER+SIZE_T_ID_25];
+        unsigned char temID25[TEMPLATE_HEADER+SIZE_T_ID_24];
+        unsigned char temID51[TEMPLATE_HEADER+SIZE_T_ID_51];
+        //printf("SIZE: %d\n", sizeof(msg2));
+        for(i=SIZE_UDP_HEADER;i<sizeof(pkt2); i++)
+        {
+            msg2[i-SIZE_UDP_HEADER] = pkt2[i];
+        }
+
+        //printf("[COUNT]: %d [i]: %d\n", count,i);
+        printf("[TEMPLATE ID]: %d\n", msg2[SIZE_HEADER]);
+        printf("\n");
+        if(53 == msg2[count+SIZE_HEADER])
+        {
+            for(i=0; i<sizeof(temID53); i++)
+            {
+                temID53[i] = msg2[i];
+                //printf("%d\n", i-46);
+                count++;
+            }
+            for(j=0; j<sizeof(temID53); j++)
+            {
+                //printf("%x\n", temID53[j]);
+            }
+            uint64_t securityID1, securityID2 = 0x00;
+            uint8_t matchEventIndicator, tradingSessionID, trdSubType, padding;
+            uint16_t tradeCondition, tradeDate;
+            uint64_t mDEntryPx1, mDEntryPx2;
+            int64_t mDEntrySize1, mDEntrySize2;
+            uint32_t tradeID, mDEntryBuyer, mDEntrySeller, rptSeq;
+            uint64_t mDEntryTimestamp1, mDEntryTimestamp2;
+            securityID1 = temID53[12] | (temID53[13]<<8) | (temID53[14]<<16) | (temID53[15]<<24);
+            securityID2 = temID53[16] | (temID53[17]<<8) | (temID53[18]<<16) | (temID53[19]<<24);
+            securityID1 = (securityID1<<0) | (securityID2<<32);
+            printf("securityID: %lu\n", securityID1);
+            matchEventIndicator = (temID53[20]);
+            printf("matchEventIndicator: %u\n", matchEventIndicator);
+            tradingSessionID = (temID53[21]);
+            printf("tradingSessionID: %u\n", tradingSessionID);
+            tradeCondition = (temID53[22]<<0) | (temID53[23]<<8);
+            printf("tradeCondition: %u\n", tradeCondition);
+            mDEntryPx1 = temID53[24] | (temID53[25]<<8) | (temID53[26]<<16) | (temID53[27]<<12);
+            mDEntryPx2 = temID53[28] | (temID53[29]<<8) | (temID53[30]<<16) | (temID53[31]<<24);
+            mDEntryPx1 = (mDEntryPx1<<0) | (mDEntryPx2<<32);
+            printf("mDEntryPx: %lx\n", mDEntryPx1);
+            mDEntrySize1 = temID53[32] | (temID53[33]<<8) | (temID53[34]<<16) | (temID53[35]<<12);
+            mDEntrySize2 = temID53[36] | (temID53[37]<<8) | (temID53[38]<<16) | (temID53[39]<<24);
+            mDEntrySize1 = (mDEntrySize1<<0) | (mDEntrySize2<<32);
+            printf("mDEntrySize1: %lx\n", mDEntrySize1);
+            tradeID = temID53[40] | (temID53[41]<<8) | (temID53[42]<<16) | (temID53[43]<<12);
+            printf("tradeID: %lx\n", tradeID);
+            mDEntryBuyer = temID53[44] | (temID53[45]<<8) | (temID53[46]<<16) | (temID53[47]<<12);
+            printf("mDEntryBuyer: %lx\n", mDEntryBuyer);
+            mDEntrySeller = temID53[48] | (temID53[49]<<8) | (temID53[50]<<16) | (temID53[51]<<12);
+            printf("mDEntrySeller: %lx\n", mDEntrySeller);
+            tradeDate = (temID53[52]<<0) | (temID53[53]<<8);
+            printf("tradeDate: %lx\n", tradeDate);
+            trdSubType = (temID53[54]);
+            printf("trdSubType: %lx\n", trdSubType);
+            padding = (temID53[55]);
+            mDEntryTimestamp1 = temID53[56] | (temID53[57]<<8) | (temID53[58]<<16) | (temID53[59]<<24);
+            mDEntryTimestamp2 = temID53[60] | (temID53[61]<<8) | (temID53[62]<<16) | (temID53[63]<<24);
+            mDEntryTimestamp1 = (mDEntryTimestamp1<<0) | (mDEntryTimestamp2<<32);
+            printf("mDEntryTimestamp: %lx\n", mDEntryTimestamp1);
+            rptSeq = temID53[64] | (temID53[65]<<8) | (temID53[66]<<16) | (temID53[67]<<12);
+            printf("rptSeq: %lx\n", rptSeq);
+            printf("\n");
+        }
+        //arrumar daqui pra baixo
+        //printf("[COUNT]: %d [i]: %d\n", count,i);
+        printf("[TEMPLATE ID]: %d\n", msg2[count+SIZE_HEADER]);
+        printf("\n");
+        if(15 == msg2[count+SIZE_HEADER])
+        {
+            int flag = count;
+            for(i; i<sizeof(temID15)+flag; i++)
+            {
+                temID15[i-flag] = msg2[i];
+                //printf("%x\n", msg2[i]);
+                count++;
+            }
+            for(j=0; i<sizeof(temID15); i++)
+            {
+                //printf("%x\n", temID15[i]);
+            }
+        }
+
+        //printf("[COUNT]: %d [i]: %d\n", count,i);
+        printf("[TEMPLATE ID]: %d\n", msg2[count+SIZE_HEADER]);
+        printf("\n");
+        if(24 == msg2[count+SIZE_HEADER])
+        {
+            int flag = count;
+            //printf("i: %d, flag: %d, count: %d, temId24+flag: %d\n", i, flag, count, sizeof(temID24)+flag);
+            for(i; i<sizeof(temID24)+flag; i++)
+            {
+                temID24[i-flag] = msg2[i];
+                //printf("%x\n", msg2[i]);
+                count++;
+            }
+            for(j=0; j<sizeof(temID24); j++)
+            {
+                //printf("%x\n", temID24[j]);
+            }
+        }
+
+        //printf("[COUNT]: %d [i]: %d\n", count,i);
+        printf("[TEMPLATE ID]: %d\n", msg2[count+SIZE_HEADER]);
+        printf("\n");
+        if(25 == msg2[count+SIZE_HEADER])
+        {
+            int flag = count;
+            for(i; i<sizeof(temID25)+flag; i++)
+            {
+                temID25[i-flag] = msg2[i];
+                //printf("%d\n", count);
+                count++;
+            }
+            for(j=0; j<sizeof(temID25); j++)
+            {
+                //printf("%x\n", temID25[j]);
+            }
+        }
+        
+        //printf("[COUNT]: %d [i]: %d\n", count,i);
+        printf("[TEMPLATE ID]: %d\n", msg2[count+SIZE_HEADER]);
+        printf("\n");
+        if(51 == msg2[count+SIZE_HEADER])
+        {
+            int flag = count;
+            for(i; i<sizeof(temID51)+flag; i++)
+            {
+                temID51[i-flag] = msg2[i];
+                //printf("%d\n", i-46);
+                count++;
+            }
+            for(j=0; j<sizeof(temID51); j++)
+            {
+                //printf("%x\n", temID51[j]);
+            }
+        }
+    }
+    
+}
+
+void packet_3Template()
+{
+    int i, j, count=0;
+    printf("tam: %d\n", sizeof(pkt6));
+    count = 0;
+
+    if(230 == sizeof(pkt6))
+    {
+        unsigned char msg4[sizeof(pkt6)-SIZE_UDP_HEADER];
+        unsigned char temID53[TEMPLATE_HEADER+SIZE_T_ID_53];
+        unsigned char temID24[TEMPLATE_HEADER+SIZE_T_ID_25];
+        unsigned char temID51[TEMPLATE_HEADER+SIZE_T_ID_51];
+
+        for(i=SIZE_UDP_HEADER;i<sizeof(pkt6); i++)
+        {
+            msg4[i-SIZE_UDP_HEADER] = pkt6[i];
+        }
+
+        printf("[TEMPLATE ID]: %d\n", msg4[SIZE_HEADER]);
+        printf("\n");
+        if(53 == msg4[count+SIZE_HEADER])
+        {
+            for(i=0; i<sizeof(temID53); i++)
+            {
+                temID53[i] = msg4[i];
+                count++;
+            }
+            for(j=0; j<sizeof(temID53); j++)
+            {
+                //printf("%x\n", temID53[j]);
+            }
+        }
+
+        printf("[TEMPLATE ID]: %d\n", msg4[count+SIZE_HEADER]);
+        printf("\n");
+        if(24 == msg4[count+SIZE_HEADER])
+        {
+            int flag = count;
+            //printf("i: %d, flag: %d, count: %d, temId24+flag: %d\n", i, flag, count, sizeof(temID24)+flag);
+            for(i; i<sizeof(temID24)+flag; i++)
+            {
+                temID24[i-flag] = msg4[i];
+                //printf("%x\n", msg2[i]);
+                count++;
+            }
+            for(j=0; j<sizeof(temID24); j++)
+            {
+                //printf("%x\n", temID24[j]);
+            }
+        }
+
+        printf("[TEMPLATE ID]: %d\n", msg4[count+SIZE_HEADER]);
+        printf("\n");
+        if(51 == msg4[count+SIZE_HEADER])
+        {
+            int flag = count;
+            for(i; i<sizeof(temID51)+flag; i++)
+            {
+                temID51[i-flag] = msg4[i];
+                //printf("%d\n", i-46);
+                count++;
+            }
+            for(j=0; j<sizeof(temID51); j++)
+            {
+                //printf("%x\n", temID51[j]);
+            }
+        }
+    }
+}
+
+void packet_2Template()
+{
+    int i, j, count=0;
+    printf("tam: %d\n", sizeof(pkt15));
+    count = 0;
+
+    if(186 == sizeof(pkt15))
+    {
+        unsigned char msg5[sizeof(pkt15)-SIZE_UDP_HEADER];
+        unsigned char temID53[TEMPLATE_HEADER+SIZE_T_ID_53];
+        unsigned char temID51[TEMPLATE_HEADER+SIZE_T_ID_51];
+
+        for(i=SIZE_UDP_HEADER;i<sizeof(pkt15); i++)
+        {
+            msg5[i-SIZE_UDP_HEADER] = pkt15[i];
+        }
+
+        printf("[TEMPLATE ID]: %d\n", msg5[SIZE_HEADER]);
+        printf("\n");
+        if(53 == msg5[count+SIZE_HEADER])
+        {
+            for(i=0; i<sizeof(temID53); i++)
+            {
+                temID53[i] = msg5[i];
+                count++;
+            }
+            for(j=0; j<sizeof(temID53); j++)
+            {
+                //printf("%x\n", temID53[j]);
+            }
+        }
+
+        printf("[TEMPLATE ID]: %d\n", msg5[count+SIZE_HEADER]);
+        printf("\n");
+        if(51 == msg5[count+SIZE_HEADER])
+        {
+            int flag = count;
+            for(i; i<sizeof(temID51)+flag; i++)
+            {
+                temID51[i-flag] = msg5[i];
+                //printf("%d\n", i-46);
+                count++;
+            }
+            for(j=0; j<sizeof(temID51); j++)
+            {
+                //printf("%x\n", temID51[j]);
+            }
+        }
+    }
+}
+
+int main (void)
+{
+    //printf("teste\n");
+    
+    
+    packet_1Template(0);
+    printf("\n");
+    printf("\n");
+    printf("\n");
+
+    //pacotes com mais de um templates
+    packet_5Template();
+
+    printf("\n");
+    printf("\n");
+    printf("\n");
+
+    //pacote 1 template
+    packet_1Template(1);
+    
+
+    printf("\n");
+    printf("\n");
+    printf("\n");
+
+    //pacote 3 templates
+    packet_3Template();
+    
+
+    printf("\n");
+    printf("\n");
+    printf("\n");
+
+    //pacote 3 templates
+    packet_2Template();
+
+}

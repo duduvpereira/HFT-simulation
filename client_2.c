@@ -14,24 +14,25 @@ void receive_packet()
     int i, len;
 
     struct sockaddr_in servAddr; 
-
+    //printf("1.\n");
     if((sockD = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
         printf("Fail.\n");
         //return 0;
     }
-
-    memset(&servAddr, 0, sizeof(servAddr));
+    //printf("2.\n");
+    //memset(&servAddr, 0, sizeof(servAddr));
   
     servAddr.sin_family = AF_INET; 
     servAddr.sin_port = htons(9001); // use some unused port number 
     servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-
+    //printf("3.\n");
     if (bind(sockD, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0)
     {
-        printf("bind() failed");
+        printf("bind() failed\n");
+        return;
     }
-      
+    //printf("4.\n");
     //int connectStatus = connect(sockD, (struct sockaddr*)&servAddr, sizeof(servAddr)); 
   
     //if (connectStatus == -1) { 
