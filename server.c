@@ -55,58 +55,52 @@ static const unsigned char pkt2[138] = {
 
 unsigned char arrays[2][92];
 
-send_packet()
+send_packet(int port)
 {
-    int i, status;
-    int servSockD;
-    struct sockaddr_in servAddr; 
-    
-    if ((servSockD = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-    {
-        printf("Fail 1.\n");
-        return 0;
-    }
-    
-    int broadcastPermission;
+    int i;
+    int sockfd, newsockfd, portno, clilen;
 
-    broadcastPermission = 1;
-    if (setsockopt(servSockD, SOL_SOCKET, SO_BROADCAST, (void *) &broadcastPermission, sizeof(broadcastPermission)) < 0)
-    {
-        printf("setsockopt() failed");
-    }
+    struct sockaddr_in serv_addr, cli_addr;
+
+    bzero((char *) &serv_addr, sizeof(serv_addr));
     
-  
-    servAddr.sin_family = AF_INET; 
-    servAddr.sin_port = htons(9001); 
-    servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    //printf("4\n");
+    // define server address 
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY; 
+    if(port == 9001)
+    {
+        serv_addr.sin_port = htons(9001);
+    }
+    else if(port == 8001)
+    {
+        serv_addr.sin_port = htons(8001);
+    }    
+    
   
     // bind socket to the specified IP and port 
-    //status = bind(servSockD, (struct sockaddr*)&servAddr, 
-    //     sizeof(servAddr));
-    
-    //if (0 > status) 
-	//{ 
-	//	perror("bind failed"); 
-	//	exit(EXIT_FAILURE); 
-	//} 
-  
+    if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0){
+        printf("ERROR on binding\n");
+        return;
+    }
+
     // listen for connections 
-    //listen(servSockD, 1); 
+    listen(sockfd, 5);
+
+    // integer to hold client socket.
+    newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
   
-    // integer to hold client socket. 
-    //int clientSocket = accept(servSockD, NULL, NULL); 
+    
   
     // send's messages to client socket
     //printf("\n\n\n\nmsg: %x\n\n\n", arrays[0]);
     for(i=0; i<2; i++)
-    {  
-        //printf("%d\n", sizeof(arrays[0]));
-        sendto(servSockD, arrays[i], sizeof(arrays[i]), 0, (struct sockaddr *) &servAddr, sizeof(struct sockaddr_in));
-        //sendto(servSockD, arrays[0], sizeof(arrays[0]), 0, (struct sockaddr *)&servAddr, sizeof(struct sockaddr_in));
+    {
+        send(newsockfd, arrays[i], sizeof(arrays[i]), 0);
         //send(clientSocket, arrays[i], sizeof(arrays[i]), 0);
+        close(newsockfd);
     }
-    //printf("6\n");
 }
 
 
@@ -128,7 +122,10 @@ int main (void)
         arrays[1][i-46] = pkt2[i];
     }
 
-    send_packet();     
+    send_packet(9001);
+    //int port;
+    //scanf("%d", &port);
+    //send_packet(port);     
   
     return 0; 
 }
