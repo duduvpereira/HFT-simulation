@@ -225,11 +225,16 @@ send_packet(int port, int p)
     cli_addr.sin_family = AF_INET;
     cli_addr.sin_addr.s_addr = INADDR_ANY;
     cli_addr.sin_port = htons(port);
-    for(i=0; i<2; i++)
-    {
+    //for(i=0; i<2; i++)
+    //{
     //if(50 == p)
     //{
-        bytes = sendto(sockfd, arrays[i], sizeof(arrays[i]), 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+        bytes = sendto(sockfd, pkt1, sizeof(pkt1), 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+        if(bytes <= 0)
+        {
+            printf("ERRO SEND\n");
+        }
+        bytes = sendto(sockfd, pkt2, sizeof(pkt2), 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
         if(bytes <= 0)
         {
             printf("ERRO SEND\n");
@@ -244,7 +249,7 @@ send_packet(int port, int p)
     //    }
     //}
         //send(clientSocket, arrays[i], sizeof(arrays[i]), 0);
-    }
+    //}
 }
 
 
@@ -261,16 +266,16 @@ int main (void)
     //    arrays[0][i-46] = pkt1[i];
         //printf("%d\n", i-46);
     //}
-    for(i=0; i<sizeof(pkt1); i++)
-    {
-        arrays[0][i] = pkt1[i];
+    //for(i=0; i<sizeof(pkt1); i++)
+    //{
+    //    arrays[0][i] = pkt1[i];
         //printf("%d\n", i-46);
-    }
-    for(i=0; i<sizeof(pkt1); i++)
-    {
-        arrays[1][i] = pkt2[i];
+    //}
+    //for(i=0; i<sizeof(pkt1); i++)
+    //{
+    //    arrays[1][i] = pkt2[i];
         //printf("%d\n", i-46);
-    }
+    //}
 
     //for(i=46; i<sizeof(pkt2); i++)
     //{

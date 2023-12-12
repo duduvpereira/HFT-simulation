@@ -13,65 +13,62 @@
 #define SIZE_T_ID_51 44
 #define SIZE_UDP_HEADER 46
 
-unsigned char strData[138];
+unsigned char strData[500];
 int sockfd;
 uint8_t retransmit = 0;
 
-void packet_1Template(int flag)
+void packet_1Template(int tam)
 {
     int i, j, count=0;
     
-    if(0 == flag)
+
+    printf("tam: %d\n", tam);
+    //pacote com um template
+    if(138 == tam)
     {
-        printf("tam: %d\n", sizeof(strData));
-        //pacote com um template
-        if(138 == sizeof(strData))
+        unsigned char *msg1;
+        //memcpy(msg1, strData[SIZE_UDP_HEADER], tam);
+        for(i=0; i<tam; i++)
         {
-            unsigned char msg1[sizeof(strData)-SIZE_UDP_HEADER];
-            for(i=SIZE_UDP_HEADER; i<sizeof(strData); i++)
-            {
-                msg1[i-SIZE_UDP_HEADER] = strData[i];
-                //printf("%d\n", i-46);
-            }
-            printf("[TEMPLATE ID]: %d\n", msg1[SIZE_HEADER]);
-            if(55==msg1[SIZE_HEADER])
-            {
-                retransmit = 1;
-            }
-            for(j=0; j<sizeof(msg1); j++)
-            {
-                //printf("%x\n", msg1[j]);
-            }
+            printf("aqui\n");
+            msg1[i] = strData[i+SIZE_UDP_HEADER];
+            //printf("%d\n", i-46);
+            printf("aqui2\n");
+        }
+        printf("[TEMPLATE ID]: %d\n", msg1[SIZE_HEADER]);
+        if(55==msg1[SIZE_HEADER])
+        {
+            retransmit = 1;
+        }
+        for(j=0; j<tam; j++)
+        {
+            //printf("%x\n", msg1[j]);
         }
     }
 
-    else
+    printf("tam: %d\n", tam);
+    count = 0;
+    //pacote com um template
+    if(126 == tam)
     {
-        printf("tam: %d\n", sizeof(strData));
-        count = 0;
-        //pacote com um template
-        if(126 == sizeof(strData))
+        unsigned char *msg3;
+        for(i=SIZE_UDP_HEADER; i<tam; i++)
         {
-            unsigned char msg3[sizeof(strData)-SIZE_UDP_HEADER];
-            for(i=SIZE_UDP_HEADER; i<sizeof(strData); i++)
-            {
-                msg3[i-SIZE_UDP_HEADER] = strData[i];
-                //printf("%d\n", i-46);
-            }
-            printf("[TEMPLATE ID]: %d\n", msg3[SIZE_HEADER]);
+            msg3[i-SIZE_UDP_HEADER] = strData[i];
+            //printf("%d\n", i-46);
         }
+        printf("[TEMPLATE ID]: %d\n", msg3[SIZE_HEADER]);
     }
-
 }
 
-void packet_5Template()
+void packet_5Template(int tam)
 {
     int i, j, count=0;
-    printf("tam: %d\n", sizeof(strData));
+    printf("tam: %d\n", tam);
     count = 0;
-    if(330 == sizeof(strData))
+    if(330 == tam)
     {
-        unsigned char msg2[sizeof(strData)-SIZE_UDP_HEADER];
+        unsigned char *msg2;
         unsigned char temID53[TEMPLATE_HEADER+SIZE_T_ID_53];
         unsigned char temID15[TEMPLATE_HEADER+SIZE_T_ID_15];
         unsigned char temID24[TEMPLATE_HEADER+SIZE_T_ID_25];
@@ -176,20 +173,20 @@ void packet_5Template()
     
 }
 
-void packet_3Template()
+void packet_3Template(int tam)
 {
     int i, j, count=0;
-    printf("tam: %d\n", sizeof(strData));
+    printf("tam: %d\n", tam);
     count = 0;
 
-    if(230 == sizeof(strData))
+    if(230 == tam)
     {
-        unsigned char msg4[sizeof(strData)-SIZE_UDP_HEADER];
+        unsigned char *msg4;
         unsigned char temID53[TEMPLATE_HEADER+SIZE_T_ID_53];
         unsigned char temID24[TEMPLATE_HEADER+SIZE_T_ID_25];
         unsigned char temID51[TEMPLATE_HEADER+SIZE_T_ID_51];
 
-        for(i=SIZE_UDP_HEADER;i<sizeof(strData); i++)
+        for(i=SIZE_UDP_HEADER;i<tam; i++)
         {
             msg4[i-SIZE_UDP_HEADER] = strData[i];
         }
@@ -246,19 +243,19 @@ void packet_3Template()
     }
 }
 
-void packet_2Template()
+void packet_2Template(int tam)
 {
     int i, j, count=0;
-    printf("tam: %d\n", sizeof(strData));
+    printf("tam: %d\n", tam);
     count = 0;
 
-    if(186 == sizeof(strData))
+    if(186 == tam)
     {
-        unsigned char msg5[sizeof(strData)-SIZE_UDP_HEADER];
+        unsigned char *msg5;
         unsigned char temID53[TEMPLATE_HEADER+SIZE_T_ID_53];
         unsigned char temID51[TEMPLATE_HEADER+SIZE_T_ID_51];
 
-        for(i=SIZE_UDP_HEADER;i<sizeof(strData); i++)
+        for(i=SIZE_UDP_HEADER;i<tam; i++)
         {
             msg5[i-SIZE_UDP_HEADER] = strData[i];
         }
@@ -333,15 +330,32 @@ void receive_packet()
 {
     int i;
     uint32_t templateId;
+    int tam;
     printf("receving packet....\n");
     //for(i=0; i<2; i++)
     //{
-        recv(sockfd, strData, sizeof(strData), 0);
+        tam = recv(sockfd, strData, sizeof(strData), 0);
         //send(clientSocket, strData[i], sizeof(strData[i]), 0);
     //}
     //for(i=0; i<2; i++)
     //{
-        packet_1Template(0);
+        printf("TAM: %d\n", tam);
+        if(tam == 138)
+        {
+            packet_1Template(tam);
+        }
+        if(tam == 138)
+        {
+            packet_5Template(tam);
+        }
+        if(tam == 138)
+        {
+            packet_3Template(0);
+        }
+        if(tam == 138)
+        {
+            packet_2Template(0);
+        }
         //templateId =  strData[22];
         //if(55==templateId)
         //{
