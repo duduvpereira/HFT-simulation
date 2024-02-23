@@ -239,6 +239,26 @@ send_packet(int port, int p)
         {
             printf("ERRO SEND\n");
         }
+        bytes = sendto(sockfd, pkt3, sizeof(pkt3), 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+        if(bytes <= 0)
+        {
+            printf("ERRO SEND\n");
+        }
+        bytes = sendto(sockfd, pkt4, sizeof(pkt4), 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+        if(bytes <= 0)
+        {
+            printf("ERRO SEND\n");
+        }
+        bytes = sendto(sockfd, pkt6, sizeof(pkt6), 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+        if(bytes <= 0)
+        {
+            printf("ERRO SEND\n");
+        }
+        bytes = sendto(sockfd, pkt15, sizeof(pkt15), 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+        if(bytes <= 0)
+        {
+            printf("ERRO SEND\n");
+        }
     //}
     //else
     //{

@@ -6,13 +6,18 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <math.h> 
+#include <time.h>
 
 #define PORT 4444
 
 int main(){
 
 	int sockfd, ret;
-	 struct sockaddr_in serverAddr;
+	struct sockaddr_in serverAddr;
+	struct timespec spec;
+	long            ms; // Milliseconds
+    time_t          s;  // Seconds
 
 	int newSocket;
 	struct sockaddr_in newAddr;
@@ -59,7 +64,16 @@ int main(){
 			close(sockfd);
 
 			while(1){
+				//start_t = clock();
 				recv(newSocket, buffer, 1024, 0);
+				clock_gettime(CLOCK_REALTIME, &spec);
+				s  = spec.tv_sec;
+    			ms = round(spec.tv_nsec); // Convert nanoseconds to milliseconds
+    			//if (ms > 999) {
+    			//    s++;
+    			//    ms = 0;
+    			//}
+				printf("Current time: %03ld sec %03ld ms\n", s, ms);
 				if(strcmp(buffer, ":exit") == 0){
 					printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
 					break;

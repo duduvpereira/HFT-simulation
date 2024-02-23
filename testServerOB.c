@@ -60,7 +60,21 @@ int main(){
 			printf("out\n");
 			exit(1);
 		}
-		printf("Connection accepted from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+		recv(newSocket, strData, sizeof(strData), 0);
+		printf("data: %s\n", strData);
+		if(strcmp(strData, "12345678") == 0)
+		{
+			send(newSocket, "1", 1, 0);
+			printf("Connection accepted from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+		}
+		else
+		{
+			send(newSocket, "0", 1, 0);
+			printf("Wrong key, Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+			close(newSocket);
+			break;
+		}
+
 
 		if((childpid = fork()) == 0){
 			close(sockfd);
@@ -82,7 +96,7 @@ int main(){
 				//	printf("packet: %d\n", buffer[k]);
 				//}
 				printf("Current time: %03ld sec %03ld ms\n", s, ms);
-				if(templateId==55)
+				if(templateId==53)
 				{
 					printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
 					break;
