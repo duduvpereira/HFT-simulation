@@ -11,6 +11,60 @@
 
 #define PORT 4444
 
+
+int sockfd;
+create_socket()
+{
+    int32_t reuse = 1;
+
+    struct sockaddr_in serv_addr;
+    
+    // define server address 
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    if(sockfd < 0)
+    {
+        printf("ERRO SOCKET\n");
+    }
+
+    memset((char*) &serv_addr, 0, sizeof(serv_addr));
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY; 
+    serv_addr.sin_port = htons(8009);
+    
+    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse)) != 0)
+    {
+        printf("ERRO SETSOCKOPT\n");
+    }
+
+    // bind socket to the specified IP and port 
+    if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0){
+        printf("ERROR on binding\n");
+        return;
+    }
+}
+
+send_packet(int port, int p)
+{
+    int i, bytes;
+
+    struct sockaddr_in cli_addr;
+    
+    cli_addr.sin_family = AF_INET;
+    cli_addr.sin_addr.s_addr = INADDR_ANY;
+    cli_addr.sin_port = htons(port);
+    //for(i=0; i<2; i++)
+    //{
+    //if(50 == p)
+    //{
+        bytes = sendto(sockfd, "ok", 2, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+        if(bytes <= 0)
+        {
+            printf("ERRO SEND\n");
+        }
+}
+
 int main(){
 
 	int sockfd, ret;
@@ -66,6 +120,7 @@ int main(){
 		{
 			send(newSocket, "1", 1, 0);
 			printf("Connection accepted from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+			create_socket();
 		}
 		else
 		{
@@ -96,8 +151,9 @@ int main(){
 				//	printf("packet: %d\n", buffer[k]);
 				//}
 				printf("Current time: %03ld sec %03ld ms\n", s, ms);
-				if(templateId==53)
+				if(templateId==55)
 				{
+					send_packet(8001, 0);
 					printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
 					break;
 				}
