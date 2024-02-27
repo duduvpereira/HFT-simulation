@@ -5,6 +5,8 @@
 #include <sys/types.h> 
 #include <inttypes.h>
 
+#include <stddef.h>
+
 #define TEMPLATE_HEADER 12
 #define SIZE_HEADER 22
 #define SIZE_T_ID_53 56
@@ -12,13 +14,31 @@
 #define SIZE_T_ID_24 32
 #define SIZE_T_ID_25 32
 #define SIZE_T_ID_51 44
-#define SIZE_T_ID_55 64
+#define SIZE_T_ID_55 (64 + 28)
 #define SIZE_UDP_HEADER 46
 #define HEADER_SBE 28
 
 
 struct pkt55
 {
+    uint64_t UDP1;
+    uint64_t UDP2;
+    uint64_t UDP3;
+    uint64_t UDP4;
+    uint64_t UDP5;
+    uint32_t UDP6;
+    uint16_t UDP7;
+    uint8_t chNumber;
+    uint8_t reserved;
+    uint16_t seqVersion;
+    uint32_t seqNumber;
+    uint64_t sendingTime;
+    uint16_t msgLength;
+    uint16_t encondingType;
+    uint16_t blockLength;
+    uint16_t templateId;
+    uint16_t schemaId;
+    uint16_t version;
     uint64_t securityID;
     uint16_t padding;
     uint8_t agressorSide;
@@ -30,11 +50,31 @@ struct pkt55
     uint64_t agressorTime;
     uint32_t rptSeq;
     uint64_t mdEntryTimeStamp;
-} __attribute__((packet, aligned(4)));
+} __attribute__((packed));
 
 
 struct pkt53
 {
+    uint64_t UDP1;
+    uint64_t UDP2;
+    uint64_t UDP3;
+    uint64_t UDP4;
+    uint64_t UDP5;
+    uint32_t UDP6;
+    uint16_t UDP7;
+    //cabeçalho
+    uint8_t chNumber;
+    uint8_t reserved;
+    uint16_t seqVersion;
+    uint32_t seqNumber;
+    uint64_t sendingTime;
+    uint16_t msgLength;
+    uint16_t encondingType;
+    uint16_t blockLength;
+    uint16_t templateId;
+    uint16_t schemaId;
+    uint16_t version;
+    //body
     uint64_t securityID;
     uint8_t matchEventIndicator;
     uint8_t tradingSessionID;
@@ -49,9 +89,47 @@ struct pkt53
     uint8_t padding;
     uint64_t mdEntryTimeStamp;
     uint32_t rptSeq;
-} __attribute__((packet, aligned(4)));
+} __attribute__((packed));
 
-unsigned char strData[500];
+
+struct pkt102
+{
+    uint64_t UDP1;
+    uint64_t UDP2;
+    uint64_t UDP3;
+    uint64_t UDP4;
+    uint64_t UDP5;
+    uint32_t UDP6;
+    uint16_t UDP7;
+    //cabeçalho
+    uint8_t chNumber;
+    uint8_t reserved;
+    uint16_t seqVersion;
+    uint32_t seqNumber;
+    uint64_t sendingTime;
+    uint16_t msgLength;
+    uint16_t encondingType;
+    uint16_t blockLength;
+    uint16_t templateId;
+    uint16_t schemaId;
+    uint16_t version;
+    //body
+    uint64_t ClOrdID;
+    uint32_t EnteringFirm;
+    uint64_t EnteringTrader;
+    uint16_t EnteringTrader2;
+    uint8_t SenderLocation;
+    uint8_t OrdTagID;
+    uint8_t MarketSegmented;
+    uint8_t side;
+    uint64_t TransactTime;
+    uint64_t OrderQty;
+    uint64_t securityID;
+    uint8_t TimeInForce;
+    uint8_t OrdType;
+} __attribute__((packed));
+
+unsigned char strData[1000];
 int sockfd;
 uint8_t retransmit = 0;
 
@@ -61,45 +139,60 @@ void decodePkt(unsigned char *temp, int tam)
 {
     int i, j, count=0;
 
-    printf("tam: %d\n", tam);
+    //printf("tam: %d\n", tam);
     //pacote com um template
     
     //Tira o header UDP
     for(i=0; i<tam; i++)
     {
-        temp[i] = strData[i+SIZE_UDP_HEADER];
+        temp[i] = strData[i];
     }
 
-    printf("[TEMPLATE ID]: %d\n", temp[SIZE_HEADER]);
+    printf("[TEMPLATE ID]: %d\n", temp[SIZE_HEADER+SIZE_UDP_HEADER]);
 
     
-    if(55 == temp[SIZE_HEADER])
+    if(55 == temp[SIZE_HEADER+SIZE_UDP_HEADER])
     {
-        printf("caiu55\n");
-        unsigned char temID55[SIZE_T_ID_55];
-        for(i=HEADER_SBE; i<(SIZE_T_ID_55+HEADER_SBE) ; i++)
-        {
-            temID55[i-HEADER_SBE] = temp[i];
-        }
-        //struct pkt55 *msg55 = (struct pkt55 *)temID55;
+        //printf("caiu55\n");
+        //unsigned char temID55[SIZE_T_ID_55];
+        //for(i=HEADER_SBE; i<(SIZE_T_ID_55+HEADER_SBE) ; i++)
+        //{
+        //    temID55[i-HEADER_SBE] = temp[i];
+        //}
+        struct pkt55 *msg55 = (struct pkt55 *)temp;
+        //printf("\n%llx\n", msg55->securityID);
         retransmit = 1;
-        createOrder(temID55);
+        createOrder(temp);
     }
 
-    if(56 == temp[SIZE_HEADER])
+    if(53 == temp[SIZE_HEADER+SIZE_UDP_HEADER])
     {
-        unsigned char temID53[SIZE_T_ID_53];
-        for(i=HEADER_SBE; i<(SIZE_T_ID_53+HEADER_SBE) ; i++)
-        {
-            temID53[i-HEADER_SBE] = temp[i];
-        }
-        //struct ppkt56 *msg53 = (struct pkt53 *)temID53;
+        //unsigned char temID53[SIZE_T_ID_53];
+        //for(i=HEADER_SBE; i<(SIZE_T_ID_53+HEADER_SBE) ; i++)
+        //{
+        //    temID53[i-HEADER_SBE] = temp[i];
+        //}
+        struct pkt53 *msg53 = (struct pkt53 *)temp;
+        printf("securityID: %llx\n",            (msg53->securityID));
+        printf("matchEventIndicator: %llx\n",   (msg53->matchEventIndicator));
+        printf("tradingSessionID: %llx\n",      (msg53->tradingSessionID));
+        printf("tradeCondition: %llx\n",        (msg53->tradeCondition));
+        printf("mDEntryPx: %llx\n",             (msg53->mDEntryPx));
+        printf("mDEntrySize: %llx\n",           (msg53->mDEntrySize));
+        printf("tradeID: %llx\n",               (msg53->tradeID));
+        printf("mDEntryBuyer: %llx\n",          (msg53->mDEntryBuyer));
+        printf("mDEntrySeller: %llx\n",         (msg53->mDEntrySeller));
+        printf("tradeDate: %llx\n",             (msg53->tradeDate));
+        printf("trdSubType: %llx\n",            (msg53->trdSubType));
+        printf("padding: %llx\n",               (msg53->padding));
+        printf("mdEntryTimeStamp: %03ld\n",      (msg53->mdEntryTimeStamp));
+        printf("rptSeq: %llx\n",                (msg53->rptSeq));
     }
     
-    for(j=0; j<tam; j++)
-    {
+    //for(j=0; j<tam; j++)
+    //{
         //printf("%x\n", msg1[j]);
-    }
+    //}
 }
 
 
@@ -107,7 +200,7 @@ void createOrder(unsigned char *msg)
 {
     //struct pkt55 *msg55 = (struct pkt55 *) malloc(sizeof(struct pkt55));
     struct pkt55 *msg55 = (struct pkt55 *)msg;
-    printf("secID: %llx\n",             (msg55->securityID));
+    printf("securityID: %llx\n",             (msg55->securityID));
     printf("padding: %llx\n",           (msg55->padding));
     printf("agressorSide: %llx\n",      (msg55->agressorSide));
     printf("padding2: %llx\n",          (msg55->padding2));
@@ -119,287 +212,31 @@ void createOrder(unsigned char *msg)
     printf("rptSeq: %llx\n",            (msg55->rptSeq));
     printf("mdEntryTimeStamp: %llx\n",  (msg55->mdEntryTimeStamp));
 
+    //printf("\naqui2\n");
+    struct pkt102 *msg102 = (struct pkt102 *) malloc(sizeof(struct pkt102));
+    //printf("\naqui3\n");
+    msg102->templateId = 0x66;
+    //printf("\naqui4\n");
+    msg102->ClOrdID = 0x01;
+    msg102->EnteringFirm = 0x00505543;
+    msg102->EnteringTrader = 0xF5BA50;
+    msg102->SenderLocation = 0X00;
+    msg102->OrdTagID = 0X01;
+    msg102->MarketSegmented = 0XAF;
+    msg102->side = 0X01;
+    msg102->TransactTime = 0X65DCF0B6;
+    msg102->OrderQty = 0X05;
+    msg102->securityID = msg55->securityID;
+    msg102->TimeInForce = 0x00;
+    msg102->OrdType = 0x02;
 
-    unsigned char tempSender[138] = {0};
-}
+    //printf("\naqui5\n");
 
-/*
-void packet_1Template(int tam, unsigned char *temp)
-{
-    int i, j, count=0;
-    //unsigned char *msg1 = (unsigned char *)calloc(tam, sizeof(unsigned char));
-
-    printf("tam: %d\n", tam);
-    //pacote com um template
-    if(138 == tam)
-    {
-        //memcpy(msg1, strData[SIZE_UDP_HEADER], tam);
-        for(i=0; i<tam; i++)
-        {
-            //printf("aqui\n");
-            temp[i] = strData[i+SIZE_UDP_HEADER];
-            //printf("%d\n", i-46);
-            //printf("aqui2\n");
-        }
-        printf("[TEMPLATE ID]: %d\n", temp[SIZE_HEADER]);
-        
-        for(j=0; j<tam; j++)
-        {
-            //printf("%x\n", msg1[j]);
-        }
-    }
-
-    //printf("tam: %d\n", tam);
-    count = 0;
-    //pacote com um template
-    if(126 == tam)
-    {
-        for(i=SIZE_UDP_HEADER; i<tam; i++)
-        {
-            temp[i-SIZE_UDP_HEADER] = strData[i];
-            //printf("%d\n", i-46);
-        }
-        printf("[TEMPLATE ID]: %d\n", temp[SIZE_HEADER]);
-    }
-    //free(msg1);
-}
-
-void packet_5Template(int tam, unsigned char *temp)
-{
-    int i, j, count=0;
-    printf("tam: %d\n", tam);
-    count = 0;
-    //unsigned char *msg2 = (unsigned char *)calloc(tam, sizeof(unsigned char));
-    if(330 == tam)
-    {
-        unsigned char temID53[TEMPLATE_HEADER+SIZE_T_ID_53];
-        unsigned char temID15[TEMPLATE_HEADER+SIZE_T_ID_15];
-        unsigned char temID24[TEMPLATE_HEADER+SIZE_T_ID_25];
-        unsigned char temID25[TEMPLATE_HEADER+SIZE_T_ID_24];
-        unsigned char temID51[TEMPLATE_HEADER+SIZE_T_ID_51];
-        //printf("SIZE: %d\n", sizeof(msg2));
-        for(i=SIZE_UDP_HEADER;i<sizeof(strData); i++)
-        {
-            temp[i-SIZE_UDP_HEADER] = strData[i];
-        }
-
-        //printf("[COUNT]: %d [i]: %d\n", count,i);
-        printf("[TEMPLATE ID]: %d\n", temp[SIZE_HEADER]);
-        printf("\n");
-        if(53 == temp[count+SIZE_HEADER])
-        {
-            for(i=0; i<sizeof(temID53); i++)
-            {
-                temID53[i] = temp[i];
-                //printf("%d\n", i-46);
-                count++;
-            }
-            for(j=0; j<sizeof(temID53); j++)
-            {
-                //printf("%x\n", temID53[j]);
-            }
-        }
-        //arrumar daqui pra baixo
-        //printf("[COUNT]: %d [i]: %d\n", count,i);
-        printf("[TEMPLATE ID]: %d\n", temp[count+SIZE_HEADER]);
-        printf("\n");
-        if(15 == temp[count+SIZE_HEADER])
-        {
-            int flag = count;
-            for(i; i<sizeof(temID15)+flag; i++)
-            {
-                temID15[i-flag] = temp[i];
-                //printf("%x\n", temp[i]);
-                count++;
-            }
-            for(j=0; i<sizeof(temID15); i++)
-            {
-                //printf("%x\n", temID15[i]);
-            }
-        }
-
-        //printf("[COUNT]: %d [i]: %d\n", count,i);
-        printf("[TEMPLATE ID]: %d\n", temp[count+SIZE_HEADER]);
-        printf("\n");
-        if(24 == temp[count+SIZE_HEADER])
-        {
-            int flag = count;
-            //printf("i: %d, flag: %d, count: %d, temId24+flag: %d\n", i, flag, count, sizeof(temID24)+flag);
-            for(i; i<sizeof(temID24)+flag; i++)
-            {
-                temID24[i-flag] = temp[i];
-                //printf("%x\n", temp[i]);
-                count++;
-            }
-            for(j=0; j<sizeof(temID24); j++)
-            {
-                //printf("%x\n", temID24[j]);
-            }
-        }
-
-        //printf("[COUNT]: %d [i]: %d\n", count,i);
-        printf("[TEMPLATE ID]: %d\n", temp[count+SIZE_HEADER]);
-        printf("\n");
-        if(25 == temp[count+SIZE_HEADER])
-        {
-            int flag = count;
-            for(i; i<sizeof(temID25)+flag; i++)
-            {
-                temID25[i-flag] = temp[i];
-                //printf("%d\n", count);
-                count++;
-            }
-            for(j=0; j<sizeof(temID25); j++)
-            {
-                //printf("%x\n", temID25[j]);
-            }
-        }
-        
-        //printf("[COUNT]: %d [i]: %d\n", count,i);
-        printf("[TEMPLATE ID]: %d\n", temp[count+SIZE_HEADER]);
-        printf("\n");
-        if(51 == temp[count+SIZE_HEADER])
-        {
-            int flag = count;
-            for(i; i<sizeof(temID51)+flag; i++)
-            {
-                temID51[i-flag] = temp[i];
-                //printf("%d\n", i-46);
-                count++;
-            }
-            for(j=0; j<sizeof(temID51); j++)
-            {
-                //printf("%x\n", temID51[j]);
-            }
-        }
-    }
-    //free(temp);
+    send_packet(msg102);
     
 }
 
-void packet_3Template(int tam, unsigned char *temp)
-{
-    int i, j, count=0;
-    printf("tam: %d\n", tam);
-    count = 0;
-    //unsigned char *temp = (unsigned char *)calloc(tam, sizeof(unsigned char));
-    if(230 == tam)
-    {
-        unsigned char temID53[TEMPLATE_HEADER+SIZE_T_ID_53];
-        unsigned char temID24[TEMPLATE_HEADER+SIZE_T_ID_25];
-        unsigned char temID51[TEMPLATE_HEADER+SIZE_T_ID_51];
 
-        for(i=SIZE_UDP_HEADER;i<tam; i++)
-        {
-            temp[i-SIZE_UDP_HEADER] = strData[i];
-        }
-
-        printf("[TEMPLATE ID]: %d\n", temp[SIZE_HEADER]);
-        printf("\n");
-        if(53 == temp[count+SIZE_HEADER])
-        {
-            for(i=0; i<sizeof(temID53); i++)
-            {
-                temID53[i] = temp[i];
-                count++;
-            }
-            for(j=0; j<sizeof(temID53); j++)
-            {
-                //printf("%x\n", temID53[j]);
-            }
-        }
-
-        printf("[TEMPLATE ID]: %d\n", temp[count+SIZE_HEADER]);
-        printf("\n");
-        if(24 == temp[count+SIZE_HEADER])
-        {
-            int flag = count;
-            //printf("i: %d, flag: %d, count: %d, temId24+flag: %d\n", i, flag, count, sizeof(temID24)+flag);
-            for(i; i<sizeof(temID24)+flag; i++)
-            {
-                temID24[i-flag] = temp[i];
-                //printf("%x\n", msg2[i]);
-                count++;
-            }
-            for(j=0; j<sizeof(temID24); j++)
-            {
-                //printf("%x\n", temID24[j]);
-            }
-        }
-
-        printf("[TEMPLATE ID]: %d\n", temp[count+SIZE_HEADER]);
-        printf("\n");
-        if(51 == temp[count+SIZE_HEADER])
-        {
-            int flag = count;
-            for(i; i<sizeof(temID51)+flag; i++)
-            {
-                temID51[i-flag] = temp[i];
-                //printf("%d\n", i-46);
-                count++;
-            }
-            for(j=0; j<sizeof(temID51); j++)
-            {
-                //printf("%x\n", temID51[j]);
-            }
-        }
-    }
-    //free(temp);
-}
-
-void packet_2Template(int tam, unsigned char *temp)
-{
-    int i, j, count=0;
-    printf("tam: %d\n", tam);
-    count = 0;
-    //unsigned char *temp = (unsigned char *)calloc(tam, sizeof(unsigned char));
-
-    if(186 == tam)
-    {
-        unsigned char temID53[TEMPLATE_HEADER+SIZE_T_ID_53];
-        unsigned char temID51[TEMPLATE_HEADER+SIZE_T_ID_51];
-
-        for(i=SIZE_UDP_HEADER;i<tam; i++)
-        {
-            temp[i-SIZE_UDP_HEADER] = strData[i];
-        }
-
-        printf("[TEMPLATE ID]: %d\n", temp[SIZE_HEADER]);
-        printf("\n");
-        if(53 == temp[count+SIZE_HEADER])
-        {
-            for(i=0; i<sizeof(temID53); i++)
-            {
-                temID53[i] = temp[i];
-                count++;
-            }
-            for(j=0; j<sizeof(temID53); j++)
-            {
-                //printf("%x\n", temID53[j]);
-            }
-        }
-
-        printf("[TEMPLATE ID]: %d\n", temp[count+SIZE_HEADER]);
-        printf("\n");
-        if(51 == temp[count+SIZE_HEADER])
-        {
-            int flag = count;
-            for(i; i<sizeof(temID51)+flag; i++)
-            {
-                temID51[i-flag] = temp[i];
-                //printf("%d\n", i-46);
-                count++;
-            }
-            retransmit = 1;
-            for(j=0; j<sizeof(temID51); j++)
-            {
-                //printf("%x\n", temID51[j]);
-            }
-        }
-    }
-    //free(temp);
-}
-*/
 create_socket()
 {
     int32_t reuse = 1;
@@ -435,7 +272,6 @@ create_socket()
 void receive_packet()
 {
     int i;
-    uint32_t templateId;
     int tam;
     printf("receving packet....\n");
     //for(i=0; i<2; i++)
@@ -446,34 +282,9 @@ void receive_packet()
     //for(i=0; i<2; i++)
     //{
         //unsigned char *temp = calloc(tam, sizeof(unsigned char));
-        unsigned char temp[500] = {0};
+        unsigned char temp[1000] = {0};
         printf("TAM1: %d\n", tam);
         decodePkt(temp, tam);
-        /*
-        if(tam <= 138)
-        {
-            packet_1Template(tam, temp);
-        }
-        if(tam == 330)
-        {
-            packet_5Template(tam, temp);
-        }
-        if(tam == 230)
-        {
-            packet_3Template(tam, temp);
-        }
-        if(tam == 186)
-        {
-            packet_2Template(tam, temp);
-        }*/
-        //free(temp);
-        //templateId =  strData[22];
-        //if(55==templateId)
-        //{
-        //    retransmit = 1;
-        //}
-        //printf("Template ID recebido: %d\n", templateId);
-    //}
 }
 
 int clientSocket;
@@ -517,20 +328,25 @@ void connectOB()
 	
 }
 
-void send_packet()
+void send_packet(unsigned char *temp)
 {
     int i;
     printf("Client: \t");
 	//scanf("%s", &buffer[0]);
     //for(i=0; i<2; i++)
     //{
-    printf("Tem ID: %d\n", strData[SIZE_UDP_HEADER + SIZE_HEADER]);
-	send(clientSocket, strData, sizeof(strData), 0);
+    printf("Tem ID: %d\n", temp[SIZE_UDP_HEADER + SIZE_HEADER]);
+    //for(i=0;i<500;i++)
+    //{
+    //    printf("[%d]: %llx\n", i, temp[i]);
+    //}
+	send(clientSocket, temp, 1000, 0);
     retransmit = 0;
 	//if(strcmp(buffer, ":exit") == 0){
     //}
     //send(clientSocket, ":exit", sizeof(":exit"), 0);
 	close(clientSocket);
+    receive_packet();
 	printf("[-]Disconnected from server.\n");
 	exit(1);
 }
@@ -545,7 +361,7 @@ int main(int argc, char const* argv[])
         receive_packet();
     }
 
-    send_packet();    
+    //send_packet();    
   
     return 0; 
 }

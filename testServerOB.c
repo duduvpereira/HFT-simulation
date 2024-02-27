@@ -11,6 +11,114 @@
 
 #define PORT 4444
 
+struct pkt102
+{
+    uint64_t UDP1;
+    uint64_t UDP2;
+    uint64_t UDP3;
+    uint64_t UDP4;
+    uint64_t UDP5;
+    uint32_t UDP6;
+    uint16_t UDP7;
+    //cabeçalho
+    uint8_t chNumber;
+    uint8_t reserved;
+    uint16_t seqVersion;
+    uint32_t seqNumber;
+    uint64_t sendingTime;
+    uint16_t msgLength;
+    uint16_t encondingType;
+    uint16_t blockLength;
+    uint16_t templateId;
+    uint16_t schemaId;
+    uint16_t version;
+    //body
+    uint64_t ClOrdID;
+    uint32_t EnteringFirm;
+    uint64_t EnteringTrader;
+    uint16_t EnteringTrader2;
+    uint8_t SenderLocation;
+    uint8_t OrdTagID;
+    uint8_t MarketSegmented;
+    uint8_t side;
+    uint64_t TransactTime;
+    uint64_t OrderQty;
+    uint64_t securityID;
+    uint8_t TimeInForce;
+    uint8_t OrdType;
+} __attribute__((packed));
+
+struct pkt55
+{
+    uint64_t UDP1;
+    uint64_t UDP2;
+    uint64_t UDP3;
+    uint64_t UDP4;
+    uint64_t UDP5;
+    uint32_t UDP6;
+    uint16_t UDP7;
+    uint8_t chNumber;
+    uint8_t reserved;
+    uint16_t seqVersion;
+    uint32_t seqNumber;
+    uint64_t sendingTime;
+    uint16_t msgLength;
+    uint16_t encondingType;
+    uint16_t blockLength;
+    uint16_t templateId;
+    uint16_t schemaId;
+    uint16_t version;
+    uint64_t securityID;
+    uint16_t padding;
+    uint8_t agressorSide;
+    uint8_t padding2;
+    uint64_t lastPx;
+    uint64_t fillqtx;
+    uint64_t tradeHiddenQty;
+    uint64_t cxlQty;
+    uint64_t agressorTime;
+    uint32_t rptSeq;
+    uint64_t mdEntryTimeStamp;
+} __attribute__((packed));
+
+
+struct pkt53
+{
+    uint64_t UDP1;
+    uint64_t UDP2;
+    uint64_t UDP3;
+    uint64_t UDP4;
+    uint64_t UDP5;
+    uint32_t UDP6;
+    uint16_t UDP7;
+    //cabeçalho
+    uint8_t chNumber;
+    uint8_t reserved;
+    uint16_t seqVersion;
+    uint32_t seqNumber;
+    uint64_t sendingTime;
+    uint16_t msgLength;
+    uint16_t encondingType;
+    uint16_t blockLength;
+    uint16_t templateId;
+    uint16_t schemaId;
+    uint16_t version;
+    //body
+    uint64_t securityID;
+    uint8_t matchEventIndicator;
+    uint8_t tradingSessionID;
+    uint16_t tradeCondition;
+    uint64_t mDEntryPx;
+    uint64_t mDEntrySize;
+    uint32_t tradeID;
+    uint32_t mDEntryBuyer;
+    uint32_t mDEntrySeller;
+    uint16_t tradeDate;
+    uint8_t trdSubType;
+    uint8_t padding;
+    uint64_t mdEntryTimeStamp;
+    uint32_t rptSeq;
+} __attribute__((packed));
 
 int sockfd;
 create_socket()
@@ -45,7 +153,7 @@ create_socket()
     }
 }
 
-send_packet(int port, int p)
+send_packet(int port, int p, unsigned char *pkt)
 {
     int i, bytes;
 
@@ -58,7 +166,7 @@ send_packet(int port, int p)
     //{
     //if(50 == p)
     //{
-        bytes = sendto(sockfd, "ok", 2, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+        bytes = sendto(sockfd, pkt, 1000, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
         if(bytes <= 0)
         {
             printf("ERRO SEND\n");
@@ -79,7 +187,7 @@ int main(){
 
 	socklen_t addr_size;
 
-	unsigned char strData[138];
+	unsigned char strData[1000];
 	pid_t childpid;
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -106,7 +214,7 @@ int main(){
 	}else{
 		printf("[-]Error in binding.\n");
 	}
-
+	unsigned char login[8];
 
 	while(1){
 		newSocket = accept(sockfd, (struct sockaddr*)&newAddr, &addr_size);
@@ -114,9 +222,9 @@ int main(){
 			printf("out\n");
 			exit(1);
 		}
-		recv(newSocket, strData, sizeof(strData), 0);
-		printf("data: %s\n", strData);
-		if(strcmp(strData, "12345678") == 0)
+		recv(newSocket, login, 8, 0);
+		printf("data: %s\n", login);
+		if(strcmp(login, "12345678") == 0)
 		{
 			send(newSocket, "1", 1, 0);
 			printf("Connection accepted from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
@@ -136,24 +244,47 @@ int main(){
 
 			while(1){
 				//start_t = clock();
-				recv(newSocket, strData, sizeof(strData), 0);
+				recv(newSocket, strData, 1000, 0);
 				clock_gettime(CLOCK_REALTIME, &spec);
 				s  = spec.tv_sec;
     			ms = round(spec.tv_nsec); // Convert nanoseconds to milliseconds
+
+				struct pkt102 *rcv = (struct pkt102 *)strData; 
+				struct pkt53 *snd;
+
+				snd->templateId = 53;
+				snd->securityID = rcv->securityID;
+				snd->matchEventIndicator = 0x00;
+				snd->tradingSessionID = 0x01;
+				snd->tradeCondition = 0x2001;
+				snd->mDEntryPx = 0x400d030000000000;
+				snd->mDEntrySize = 0x05;
+				snd->tradeID = 0x0a;
+				snd->mDEntryBuyer = rcv->EnteringFirm;
+				snd->mDEntrySeller = 0x00;
+				snd->tradeDate = 0x4c51;
+				snd->trdSubType = 0x01;
+				snd->padding = 0x00;
+				snd->mdEntryTimeStamp = s;
+				snd->rptSeq = 0x01;
+
+				printf("\ntempo pkt: %03ld\n", snd->mdEntryTimeStamp);
+
+
     			//if (ms > 999) {
     			//    s++;
     			//    ms = 0;
     			//}
-				templateId =  strData[68];
-				printf("Template ID recebido: %d\n", templateId);
-				//for(k=0; k<92; k++)
+				
+				printf("Template ID recebido: %d\n", rcv->templateId);
+				//for(k=0; k<500; k++)
 				//{
-				//	printf("packet: %d\n", buffer[k]);
+				//	printf("packet[%d]: %llx\n",k, strData[k]);
 				//}
-				printf("Current time: %03ld sec %03ld ms\n", s, ms);
-				if(templateId==55)
+				//printf("Current time: %03ld sec %03ld ms\n", s, ms);
+				if(rcv->templateId==102)
 				{
-					send_packet(8001, 0);
+					send_packet(8001, 0, snd);
 					printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
 					break;
 				}
