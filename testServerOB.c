@@ -276,12 +276,12 @@ int main(){
     			//    ms = 0;
     			//}
 				
-				printf("Template ID recebido: %d\n", rcv->templateId);
+				//printf("Template ID recebido: %d\n", rcv->templateId);
 				//for(k=0; k<500; k++)
 				//{
 				//	printf("packet[%d]: %llx\n",k, strData[k]);
 				//}
-				//printf("Current time: %03ld sec %03ld ms\n", s, ms);
+				printf("Client: %d, Current time: %03ld sec %03ld ms\n", ntohs(newAddr.sin_port), s, ms);
 				if(rcv->templateId==102)
 				{
 					send_packet(8001, 0, snd);
